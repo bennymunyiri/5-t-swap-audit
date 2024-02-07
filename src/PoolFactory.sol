@@ -19,13 +19,14 @@ import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 
 contract PoolFactory {
     error PoolFactory__PoolAlreadyExists(address tokenAddress);
+    //@written-info this error is not used
     error PoolFactory__PoolDoesNotExist(address tokenAddress);
 
     /*//////////////////////////////////////////////////////////////
                             STATE VARIABLES
     //////////////////////////////////////////////////////////////*/
-    mapping(address token => address pool) private s_pools;
-    mapping(address pool => address token) private s_tokens;
+    mapping(address token => address pool) private s_pools; // e probably pooltoken -> poolAddress
+    mapping(address pool => address token) private s_tokens; // backwards
 
     address private immutable i_wethToken;
 
@@ -37,6 +38,7 @@ contract PoolFactory {
     /*//////////////////////////////////////////////////////////////
                                FUNCTIONS
     //////////////////////////////////////////////////////////////*/
+    //@written lacking zero address
     constructor(address wethToken) {
         i_wethToken = wethToken;
     }
@@ -44,11 +46,14 @@ contract PoolFactory {
     /*//////////////////////////////////////////////////////////////
                            EXTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
+
+    //  e tokenaddress -> weth for a token/weth pool
     function createPool(address tokenAddress) external returns (address) {
         if (s_pools[tokenAddress] != address(0)) {
             revert PoolFactory__PoolAlreadyExists(tokenAddress);
         }
         string memory liquidityTokenName = string.concat("T-Swap ", IERC20(tokenAddress).name());
+        // @ written - info this should be .symbol() and not .name()
         string memory liquidityTokenSymbol = string.concat("ts", IERC20(tokenAddress).name());
         TSwapPool tPool = new TSwapPool(tokenAddress, i_wethToken, liquidityTokenName, liquidityTokenSymbol);
         s_pools[tokenAddress] = address(tPool);
